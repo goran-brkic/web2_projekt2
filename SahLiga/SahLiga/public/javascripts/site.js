@@ -374,7 +374,7 @@ window.onload = async () => {
     document.getElementById('xss').addEventListener("click", xss);
 
     await configureClient();
-    // await initialLogin();
+    await initialLogin();
 
     const isAuthenticated = await auth0.isAuthenticated();
     updateUI();
