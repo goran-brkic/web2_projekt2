@@ -1,10 +1,3 @@
 # web2_projekt2
 
-Poštovani,
-
-zaboravio sam odkomentirati liniju await initialLogin();
-Jer je meni radilo sve vezano uz ranjivosti dok sam ulogiran kod sebe ali ta linija je bitna za prvo logiranje ali je nekako ostala zakomentirana.
-
-Ispričavam se.
-
-Goran Brkić
+Nadogradnja na web2_projekt1, demonstracija Broken Access Control te XSS-a
